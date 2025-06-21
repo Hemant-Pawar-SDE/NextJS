@@ -1,3 +1,200 @@
 
 install next app
-npm
+how to run nextJS app-- npm run dev
+my-next14-app/
+├── app/
+│   ├── page.js ← This is rendered at http://localhost:3000
+
+=====================
+src/app/page.js	-->Renders the homepage (/)
+src/app/layout.js-->	Shared layout for all routes (like nav, theme, etc.)
+src/app/globals.css-->	Global styles for your entire app (imported in layout)
+
+✅ What Happens When You Run npm run dev
+Next.js starts the dev server
+Loads your root layout from layout.js
+Loads your home route from page.js
+Your homepage is rendered at http://localhost:3000
+=============================
+Types of components--
+🟢Server Components-- by default each component we create is server component.
+                     --run on server , not in browser.
+                     --Can fetch data directly (APIs, databases, etc.)
+                     --response (javascript) is not sent to browser.thus lower bundle size.
+                     --we cannot use react Hooks -- useState , useEffect with this.
+
+🟢Client Components-- we should write 'use client' to tell that this is client type component.
+                     --runs on browser.
+                     --Javscript is sent to browser, thus higher bundle size.
+                     --we can write react components with these .
+
+--we can nest client component inside server component. but cant nest server component inside client .
+Example--
+// ✅ This is valid
+
+// ServerComponent.jsx
+import ClientComponent from './ClientComponent';
+
+export default function ServerComponent() {
+  return (
+    <div>
+      <h1>Server-side stuff</h1>
+      <ClientComponent />
+    </div>
+  );
+}
+=======================================================================
+🔴Routing--
+
+---creating simpe rote:
+If you want to create a new route (like /about), just make a folder:about and create page.js in it
+src/app/about/page.js
+And that will render at http://localhost:3000/about --"about" is a folder name with page.js file associated with it. 
+
+--Nested Routes
+app/
+├── page.js                  → `/`
+├── products/
+│   ├── page.js              → `/products`
+│   └── featured/
+│       └── page.js          → `/products/featured`
+
+
+--Dynamic routes--
+app/
+├── products/
+│   └── [productId]/       ➡️create a folder by which you want to search ex- productID
+│       └── page.js        ➡️add page.js to it 
+
+==>This page will match any route like:
+    /products/42
+    /products/abc
+    /products/xyz123
+
+--multiple dynamic routes one after other
+This route will match: when the setup is like this--
+/docs
+/docs/intro
+/docs/intro/getting-started
+/docs/intro/getting-started/setup
+
+we will write a slug--
+app/docs/[...slug]/page.js  
+
+➡️[...slug] ➡️	/docs/a/b/c ➡️	['a','b','c']
+
+Example--
+import React from "react";
+
+function ProductReview({ params }) {
+  return (
+    <div>
+      <h1>this is product review page</h1>
+      <h1>params are:{JSON.stringify(params.productsSlug)}</h1>  💚//params are:["5","23","55","abcd"]
+    </div>
+  );
+}
+
+export default ProductReview;
+
+💚i entered--http://localhost:3000/products/5/23/55/abcd
+
+--Navigation--
+1.Link--
+      import Link from "next/link";
+      <Link href={"/about"}>Go to About Page</Link> ✅will navigate to 'about' page/route
+
+2.using useRouter--works with client components only
+✅"use client";
+✅import { useRouter } from "next/navigation";
+✅  const router = useRouter();
+✅ <button onClick={goToProducts}>
+        Using useRouter go to Products Page
+      </button>
+Note- useRouter does not work with <Link> use "button" or "div".
+
+
+3.using redirect()--
+import { redirect } from "next/navigation";
+
+export default function CartPage() {
+  const cartEmpty = true;
+
+  if (cartEmpty) {
+    redirect("/cart/emptyCart"); ⚪immediately renders 'emptyCart'
+  }
+}
+
+=====================================================================================================
+🔴Retrieve URL paths--
+✅for client-only components-- usePathname(),useSearchParams(),useParams()
+
+Ex1--
+'use client';
+import { usePathname } from 'next/navigation';
+
+export default function CurrentPath() {
+  const pathname = usePathname();
+
+  return <p>You are at: {pathname}</p>;
+}
+
+Ex2--
+suppose we have- http://localhost:3000/products?page=2&category=shoes
+params are- "page" , "category"
+
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+
+export default function ProductsPage() {
+  const searchParams = useSearchParams();
+
+  const page = searchParams.get('page');                  // '2'
+  const category = searchParams.get('category');          // 'shoes'
+
+  return (
+    <div>
+      <h1>Products</h1>
+      <p>Current Page: {page}</p>
+      <p>Category: {category}</p>
+    </div>
+  );
+}
+
+
+✅for Server-only components--
+Ex1--
+export default function Page({ searchParams }) {
+  // Equivalent to useParams()
+  const { page,category } = searchParams;
+
+  return (
+    <div>
+      <h1>Welcome, </h1>
+      <h1>page no:{page} </h1>
+      <h1>category:{category} </h1>
+
+    </div>
+  );
+}
+
+
+Ex2--
+export default function UserPage({ params }) {
+  // Equivalent to useParams()
+  const { username } = params;
+
+  return (
+    <div>
+      <h1>Welcome, {username}</h1>
+    </div>
+  );
+}
+
+Ex3--
+export default function BlogPage({ params }) {
+  const path = `/blog/${params.slug}`;
+
+  return <p>Current Path: {path}</p>;
+}
